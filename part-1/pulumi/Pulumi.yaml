@@ -1,0 +1,18 @@
+name: cis1912-hw3-part1
+runtime: nodejs
+description: CIS 1912 HW3 Part 1 - the backend on ECS Fargate behind an ALB
+
+config:
+  aws:region: us-east-1
+  projectName:
+    type: string
+    default: cis1912-hw3-part1
+  containerPort:
+    type: integer
+    default: 8000
+  imageTag:
+    type: string
+    default: v1
+  desiredCount:
+    type: integer
+    default: 1

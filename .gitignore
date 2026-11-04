@@ -1,0 +1,26 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+# Terraform state can contain secrets in plain text -- never commit it. Your
+# state lives on your own machine for this homework; in a real team it would
+# live in a shared remote backend (S3 + DynamoDB, Terraform Cloud, Pulumi
+# Cloud) so everyone plans against the same reality.
+
+# Build artifacts (Part 2's deployment package)
+build/
+*.zip
+
+# Pulumi
+node_modules/
+bin/
+Pulumi.*.yaml.bak
+
+# Local overrides
+*.auto.tfvars
+terraform.tfvars
+
+.DS_Store

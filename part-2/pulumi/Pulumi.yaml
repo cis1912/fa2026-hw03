@@ -1,0 +1,28 @@
+name: cis1912-hw3-part2
+runtime: nodejs
+description: CIS 1912 HW3 Part 2 - the same backend on Lambda behind API Gateway
+
+config:
+  aws:region: us-east-1
+  projectName:
+    type: string
+    # Deliberately different from Part 1, so the two parts keep separate state
+    # and can be deployed at the same time.
+    default: cis1912-hw3-part2
+  lambdaRuntime:
+    type: string
+    # Runtimes get deprecated on a published schedule, so this is a value you'd
+    # genuinely have to bump every year or two in a real project:
+    # https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
+    #
+    # Note that you can't just name any runtime AWS currently supports: the AWS
+    # provider validates this string against a list baked into its release, so
+    # adopting a brand-new runtime also means upgrading the provider. Your
+    # dependencies constrain your infrastructure.
+    default: nodejs22.x
+  lambdaMemory:
+    type: integer
+    default: 128
+  lambdaTimeout:
+    type: integer
+    default: 10
