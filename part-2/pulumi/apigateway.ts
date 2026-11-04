@@ -15,63 +15,64 @@ import { projectName } from "./config";
 import { func } from "./lambda";
 
 export const api = new aws.apigatewayv2.Api("this", {
-    name: projectName,
+  name: projectName,
 
-    // TODO: say which protocol this API speaks. API Gateway v2 supports more
-    //       than one; you want plain HTTP, not the realtime one.
+  // TODO: say which protocol this API speaks. API Gateway v2 supports more
+  //       than one; you want plain HTTP, not the realtime one.
 });
 
 export const integration = new aws.apigatewayv2.Integration("lambda", {
-    apiId: api.id,
+  apiId: api.id,
 
-    // TODO: an integration that proxies the whole request through to your
-    //       function, invoking it by ARN.
-    //
-    //       It also takes a payload format version, which decides the shape of
-    //       the event object your function receives. index.mjs reads the current
-    //       format -- see where it gets the request path from, then check which
-    //       version produces that shape:
-    //       https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html
+  // TODO: an integration that proxies the whole request through to your
+  //       function, invoking it by ARN.
+  //
+  //       It also takes a payload format version, which decides the shape of
+  //       the event object your function receives. index.mjs reads the current
+  //       format -- see where it gets the request path from, then check which
+  //       version produces that shape:
+  //       https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html
 });
 
 export const proxyRoute = new aws.apigatewayv2.Route("proxy", {
-    apiId: api.id,
+  apiId: api.id,
 
-    // TODO: send every method, on every path, to the integration above, so both
-    //       /health and / end up at your function. Route keys have their own
-    //       small syntax, including a wildcard for "any method" and a greedy
-    //       path variable. The route's target names an integration, and the
-    //       expected format is in the docs.
+  // TODO: send every method, on every path, to the integration above, so both
+  //       /health and / end up at your function. Route keys have their own
+  //       small syntax, including a wildcard for "any method" and a greedy
+  //       path variable. The route's target names an integration, and the
+  //       expected format is in the docs, and remember from Part 1 that an
+  //       id is an Output, so you can't just drop it into a template string.
 });
 
 export const rootRoute = new aws.apigatewayv2.Route("root", {
-    apiId: api.id,
+  apiId: api.id,
 
-    // TODO: the same, for the bare root path. Yes, this needs its own route:
-    //       the greedy path variable above does not match the root.
+  // TODO: the same, for the bare root path. Yes, this needs its own route:
+  //       the greedy path variable above does not match the root.
 });
 
 export const stage = new aws.apigatewayv2.Stage("default", {
-    apiId: api.id,
+  apiId: api.id,
 
-    // TODO: a stage to serve the API from. There is one special stage name that
-    //       serves it with no path prefix at all -- compare a stage named
-    //       "prod", which would put every request under /prod. You want the
-    //       former.
-    //
-    //       Also arrange for route changes to go live by themselves, rather
-    //       than needing a separate deployment every time.
+  // TODO: a stage to serve the API from. There is one special stage name that
+  //       serves it with no path prefix at all. Compare a stage named
+  //       "prod", which would put every request under /prod. You want the
+  //       former.
+  //
+  //       Also arrange for route changes to go live by themselves, rather
+  //       than needing a separate deployment every time.
 });
 
 export const permission = new aws.lambda.Permission("apigw", {
-    // TODO: API Gateway is a separate AWS service. Being *wired* to your
-    //       function is not the same as being *allowed* to invoke it -- grant
-    //       the invoke action to API Gateway's service principal, and scope the
-    //       grant so that only this API can call this function (rather than
-    //       anything at AWS that happens to ask).
-    //
-    // Leave this out and everything deploys cleanly, and then every single curl
-    // returns {"message":"Internal Server Error"} with nothing whatsoever in
-    // your function's logs -- because the function was never invoked at all.
-    // Remember this symptom; you will see it again in your career.
+  // TODO: API Gateway is a separate AWS service. Being *wired* to your
+  //       function is not the same as being *allowed* to invoke it -- grant
+  //       the invoke action to API Gateway's service principal, and scope the
+  //       grant so that only this API can call this function (rather than
+  //       anything at AWS that happens to ask).
+  //
+  // Leave this out and everything deploys cleanly, and then every single curl
+  // returns {"message":"Internal Server Error"} with nothing whatsoever in
+  // your function's logs, because the function was never invoked at all.
+  // Remember this symptom; you will see it again in your career.
 });

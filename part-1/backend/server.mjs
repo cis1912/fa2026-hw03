@@ -1,7 +1,7 @@
 /**
  * A backend that tells you the time. That's it.
  *
- * Nothing in this directory is homework -- you never need to edit it. The app is
+ * Nothing in this directory is homework, you never need to edit it. The app is
  * deliberately this small so that nothing about HW3 is about application code:
  * every interesting decision you make is in the infrastructure.
  *
@@ -23,7 +23,10 @@ const PORT = Number(process.env.PORT ?? 8000);
 const PLATFORM = process.env.PLATFORM ?? "unknown";
 
 const server = createServer((req, res) => {
-  const { pathname } = new URL(req.url, `http://${req.headers.host ?? "localhost"}`);
+  const { pathname } = new URL(
+    req.url,
+    `http://${req.headers.host ?? "localhost"}`,
+  );
 
   const json = (status, payload) => {
     const body = JSON.stringify(payload);

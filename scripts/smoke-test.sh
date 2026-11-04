@@ -5,7 +5,7 @@
 #   ./scripts/smoke-test.sh http://my-alb-1234.us-east-1.elb.amazonaws.com
 #   ./scripts/smoke-test.sh https://abc123.execute-api.us-east-1.amazonaws.com
 #
-# Works against either part -- both deployments answer the same two endpoints.
+# Works against either part. Both deployments answer the same two endpoints.
 # Every check prints the exact curl command it runs, so you can copy any single
 # step out of here and poke at it by hand. You do not need to edit this file.
 

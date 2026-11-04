@@ -24,7 +24,7 @@ resource "aws_apigatewayv2_integration" "lambda" {
   #
   #       It also takes a payload format version, which decides the shape of the
   #       event object your function receives. index.mjs reads the current
-  #       format -- see where it gets the request path from, then check which
+  #       format. See where it gets the request path from, then check which
   #       version produces that shape:
   #       https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html
 }
@@ -35,7 +35,7 @@ resource "aws_apigatewayv2_route" "proxy" {
   # TODO: send every method, on every path, to the integration above, so both
   #       /health and / end up at your function. Route keys have their own small
   #       syntax, including a wildcard for "any method" and a greedy path
-  #       variable -- the routing docs cover both.
+  #       variable, the routing docs cover both.
 }
 
 resource "aws_apigatewayv2_route" "root" {
@@ -49,7 +49,7 @@ resource "aws_apigatewayv2_stage" "default" {
   api_id = aws_apigatewayv2_api.this.id
 
   # TODO: a stage to serve the API from. There is one special stage name that
-  #       serves it with no path prefix at all -- compare a stage named "prod",
+  #       serves it with no path prefix at all. Compare a stage named "prod",
   #       which would put every request under /prod. You want the former.
   #
   #       Also arrange for route changes to go live by themselves, rather than
@@ -58,7 +58,7 @@ resource "aws_apigatewayv2_stage" "default" {
 
 resource "aws_lambda_permission" "apigw" {
   # TODO: API Gateway is a separate AWS service. Being *wired* to your function
-  #       is not the same as being *allowed* to invoke it -- grant the invoke
+  #       is not the same as being *allowed* to invoke it. grant the invoke
   #       action to API Gateway's service principal, and scope the grant so that
   #       only this API can call this function (rather than anything at AWS that
   #       happens to ask).

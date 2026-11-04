@@ -1,5 +1,5 @@
 /**
- * The same backend as Part 1 -- it tells you the time -- written for Lambda's
+ * The same backend as Part 1 (it tells you the time) written for Lambda's
  * Node.js runtime instead of packaged as a container.
  *
  * Nothing in this directory is homework; you never need to edit it. Notice what

@@ -3,9 +3,11 @@
 *.tfstate
 *.tfstate.*
 *.tfplan
+tfplan
 crash.log
+crash.*.log
 
-# Terraform state can contain secrets in plain text -- never commit it. Your
+# Terraform state can contain secrets in plain text (never commit it!). Your
 # state lives on your own machine for this homework; in a real team it would
 # live in a shared remote backend (S3 + DynamoDB, Terraform Cloud, Pulumi
 # Cloud) so everyone plans against the same reality.
@@ -15,6 +17,9 @@ build/
 *.zip
 
 # Pulumi
+# `pulumi login --local` keeps state under ~/.pulumi, but `pulumi login file://.`
+# puts it right here and Pulumi state is every bit as sensitive as Terraform's.
+.pulumi/
 node_modules/
 bin/
 Pulumi.*.yaml.bak

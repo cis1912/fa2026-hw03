@@ -38,10 +38,16 @@ Part 1 runs a load balancer, which bills by the hour whether or not anyone is us
 
 | | roughly |
 |---|---|
-| Application Load Balancer | $0.023/hour — about **$16/month** if you leave it up |
-| Fargate task (0.25 vCPU, 0.5 GB) | $0.01/hour |
+| Application Load Balancer | $0.0225/hour — about **$16/month** if you leave it up |
+| Its two public IPv4 addresses, one per availability zone | $0.01/hour — about **$7/month** |
+| Fargate task (0.25 vCPU, 0.5 GB) plus its public IP | $0.017/hour — about **$12/month** |
 | ECR storage, CloudWatch logs | pennies |
-| Part 2 (Lambda + API Gateway) | effectively free at this scale |
+| Part 2 (Lambda + API Gateway) | fractions of a cent at this scale |
+
+Left up for a full month that's roughly **$35**, not pennies. Note how much of it
+is the load balancer and its addresses rather than the thing actually running
+your code — AWS bills every public IPv4 address by the hour, which is why
+`network.tf` deliberately uses two availability zones instead of all six.
 
 So: **run `terraform destroy` / `pulumi destroy` as soon as you've verified your work.** Everything here can be rebuilt from your config in a few minutes — that's rather the point of the assignment. If you want to come back and poke at it later, just apply again.
 
@@ -49,7 +55,11 @@ An orphaned load balancer is the most common way students accidentally spend mon
 
 ```bash
 aws elbv2 describe-load-balancers --query 'LoadBalancers[].LoadBalancerName'
+aws ecs list-services --cluster cis1912-hw3-part1
 ```
+
+Both should come back empty. A forgotten Fargate task with no load balancer in
+front of it is still about $12/month, and it's easy to miss.
 
 ## What you do and don't edit
 

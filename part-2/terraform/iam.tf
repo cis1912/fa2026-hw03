@@ -3,7 +3,7 @@
 # Same shape as Part 1's task execution role, with two differences: the
 # principal is `lambda.amazonaws.com`, and the managed policy is the one
 # granting CloudWatch Logs access. Every Lambda function runs as a role, and at
-# minimum it needs to write its own logs -- without that, a failing function
+# minimum it needs to write its own logs, without that, a failing function
 # gives you nothing at all to debug with.
 
 resource "aws_iam_role" "lambda" {

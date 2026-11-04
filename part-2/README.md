@@ -40,10 +40,16 @@ Already written for you:
 | Terraform | Pulumi | |
 |---|---|---|
 | `versions.tf`, `variables.tf` | `Pulumi.yaml`, `config.ts` | Provider and configuration setup. Read what's *missing* versus Part 1. |
-| `package.tf` | (in `lambda.ts`) | The deployment package — the zip. |
+| `package.tf` | — | The deployment package — the zip. On the Pulumi track you build the archive inline, in `lambda.ts`. |
 | `iam.tf` | `iam.ts` | The function's execution role — given, as Part 1's was. |
-| `apigateway.tf` ↓ | `apigateway.ts` ↓ | *Yours* — see Step 3. |
 | `outputs.tf` | `index.ts` | Your outputs, including `base_url` / `baseUrl`. |
+
+Yours to write, in this order:
+
+| Terraform | Pulumi | |
+|---|---|---|
+| `lambda.tf` | `lambda.ts` | The function itself — Step 2. |
+| `apigateway.tf` | `apigateway.ts` | The front door — Step 3. |
 
 ## Step 2: The Function
 
@@ -81,7 +87,7 @@ You'll also need two routes rather than one. `{proxy+}` is greedy, but it does n
 ```bash
 cd terraform && terraform init && terraform apply
 # or
-cd pulumi && npm install && pulumi stack init dev && pulumi up
+cd pulumi && npm install && pulumi login --local && pulumi stack init dev && pulumi up
 ```
 
 Notice how much faster that was than Part 1 — no image build, no push, and no waiting for a load balancer to decide your container is healthy.
@@ -124,11 +130,20 @@ It should be live in seconds. If your apply reports no changes at all, go back a
 
 ## Cleanup
 
-Part 2 is nearly free to leave running — there's no load balancer and no idle container, and Lambda plus API Gateway at this scale sit inside the free tier. Tear it down anyway, both to keep the account tidy and because a `destroy` that works is a check on your config:
+Part 2 is nearly free to leave running — there's no load balancer and no idle container, and at this scale Lambda plus API Gateway cost fractions of a cent. (Lambda's free tier is permanent; the HTTP API one only covers your first year, so don't rely on "free tier" as the reason.) Tear it down anyway, both to keep the account tidy and because a `destroy` that works is a check on your config:
 
 ```bash
 terraform destroy     # or: pulumi destroy
 ```
+
+Then confirm nothing survived. The log group is the one thing here that can outlive a `destroy`:
+
+```bash
+aws logs describe-log-groups --log-group-name-prefix /aws/lambda/cis1912-hw3-part2 \
+  --query 'logGroups[].{name:logGroupName,retention:retentionInDays}'
+```
+
+If that still prints a group, Terraform or Pulumi never owned it — Lambda created it for you on the first invocation, with retention set to "never expire". Re-read the log-group TODO: the name has to match exactly, or you spent the whole assignment managing an empty group while the real one filled up next to it.
 
 And if you haven't destroyed **Part 1** yet, do that right now. That one is on the clock.
 
@@ -150,5 +165,5 @@ And if you haven't destroyed **Part 1** yet, do that right now. That one is on t
   ```
 - **Check what you actually shipped.** The zip is a real file you can look at:
   ```bash
-  unzip -l terraform/build/function.zip
+  unzip -l build/function.zip   # from inside part-2/terraform
   ```

@@ -26,7 +26,7 @@ Some of the infrastructure is already finished, and worth reading before you wri
 
 | Terraform | Pulumi | |
 |---|---|---|
-| `versions.tf` | `Pulumi.yaml`, `config.ts` | Provider and configuration setup. Terraform's version explains where your image comes from — read it. |
+| `versions.tf`, `variables.tf` | `Pulumi.yaml`, `config.ts` | Provider and configuration setup. Terraform's `versions.tf` explains where your image comes from — read it. |
 | `network.tf` | `network.ts` | The VPC and subnets. We borrow the account's default VPC; building one is a homework of its own. |
 | `alb.tf` | `alb.ts` | The load balancer, target group, and listener. |
 | `iam.tf` | `iam.ts` | The task execution role. |
@@ -45,6 +45,14 @@ Fill in the TODOs in `image.tf` / `image.ts`.
 Your container image has to live in a registry that AWS can pull from. ECS *can* pull from Docker Hub, but your own images generally belong somewhere private, inside your own account, with IAM deciding who may push and pull — and **ECR** (Elastic Container Registry) is AWS's answer to that. You'll declare a repository for it here.
 
 The notable part is that your IaC tool also performs the `docker build` and the `docker push` — look at the parts of this file that are already written. You never run those commands yourself, and you never copy an image URI around by hand: the repository you declare, the build that produces the image, and the deployment that consumes it are one dependency graph. Change the app, re-apply, and the right things rebuild in the right order.
+
+While you're in there, read what's already written about *change detection*, because the two tools solve it very differently.
+
+**Terraform**: read the two `triggers` blocks and the comments on them. They exist because neither the build nor the push has any *tracked input* that changes when you edit your source — the image's name is `...:v1` either way. Without them, Terraform would compare the config to its state, find nothing different, and cheerfully report no changes while running last week's code.
+
+**Pulumi**: `image.ts` has no equivalent, and that's worth understanding rather than just accepting. `awsx.ecr.Image` delegates to a `docker-build` image resource whose provider hashes your build context itself on every preview, so edited source shows up as a diff without you declaring anything — and it hands back `imageUri` already pinned to the pushed digest rather than the tag.
+
+Either way the lesson is the same: "nothing to do" and "nothing changed" are not the same claim, and this is the kind of gap where they come apart.
 
 ## Step 3: Security Groups
 
@@ -168,6 +176,6 @@ If `destroy` complains that the ECR repository isn't empty, you skipped one of t
   aws logs tail /ecs/cis1912-hw3-part1 --follow
   ```
 - **The task never starts at all** (stuck in `PENDING`, or stopped with a pull error) is usually one of two things: the execution role can't pull from ECR, or the task has no route to ECR because it didn't get a public IP.
-- **`terraform plan` wants to rebuild the image every time.** Check the `triggers` hash in `image.tf` — if it's seeing a file that changes on its own, that'd do it.
+- **`terraform plan` wants to rebuild the image every time** (Terraform track). Check the `triggers` hash in `image.tf` — if it's seeing a file that changes on its own, that'd do it.
 - **Reading a plan**: `~` means update in place, `-/+` means destroy and recreate. The second is worth pausing over, always.
 - **No default VPC?** Some newer accounts ship without one. `aws ec2 create-default-vpc` fixes that.

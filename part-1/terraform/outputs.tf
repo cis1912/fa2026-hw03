@@ -1,4 +1,4 @@
-# GIVEN: nothing to fill in here -- but `base_url` is the one you'll use
+# GIVEN: nothing to fill in here, but `base_url` is the one you'll use
 # constantly, so know it's here:
 #
 #   curl "$(terraform output -raw base_url)/health"

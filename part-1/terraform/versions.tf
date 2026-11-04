@@ -1,5 +1,5 @@
 # GIVEN: provider setup. You don't need to change anything in this file, but do
-# read it -- it explains where your image comes from.
+# read it. It explains where your image comes from.
 #
 # Two providers are in play:
 #   - aws    -- everything in your account (ECR, ECS, the ALB, IAM, logs)

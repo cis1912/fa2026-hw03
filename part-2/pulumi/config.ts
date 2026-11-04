@@ -1,5 +1,5 @@
 // GIVEN: configuration, with the defaults declared in Pulumi.yaml. Note how
-// much shorter this is than Part 1's -- no container port, no image tag, no
+// much shorter this is than Part 1's: no container port, no image tag, no
 // replica count. There's no container and no server, so there's nothing to say
 // about either.
 

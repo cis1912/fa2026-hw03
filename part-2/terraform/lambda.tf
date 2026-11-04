@@ -4,9 +4,13 @@ resource "aws_cloudwatch_log_group" "lambda" {
   #       Declare it here, with a short retention, so Terraform owns it and
   #       `destroy` cleans it up.
   #
-  #       Skip this and Lambda creates the group itself on first invocation,
-  #       with retention set to "never expire", and it quietly outlives every
-  #       destroy you ever run.
+  #       Get the name wrong (or leave this empty) and nothing fails: this
+  #       resource has no required arguments, so you'll create some
+  #       arbitrarily-named group, Lambda will create the real one itself on
+  #       first invocation with retention "never expire", every check in this
+  #       homework will still pass, and `destroy` will tidy away the decoy and
+  #       leave the real one behind forever. The Cleanup section shows how to
+  #       check which one you actually got.
 }
 
 resource "aws_lambda_function" "backend" {
@@ -26,7 +30,7 @@ resource "aws_lambda_function" "backend" {
   #       archive data source in package.tf exports a hash for exactly this.
   #
   #       Why: the package's path never changes, so with only a path to go on,
-  #       editing index.mjs changes nothing Terraform can see -- your apply is a
+  #       editing index.mjs changes nothing Terraform can see. Your apply is a
   #       no-op while you wonder why the new code isn't live. This is Part 1's
   #       image-tag-versus-digest trap wearing different clothes.
   #

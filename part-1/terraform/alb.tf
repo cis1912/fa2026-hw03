@@ -13,14 +13,14 @@
 # awsvpc mode each get their own network interface, so they register with the
 # target group by IP address rather than as EC2 instances. The default is the
 # other one, and a target group with the wrong target type is a classic cause of
-# an ECS service that never turns healthy -- with an error message that points
+# an ECS service that never turns healthy, with an error message that points
 # nowhere near the actual problem.
 
 resource "aws_lb" "this" {
   name               = "${var.project_name}-alb"
   load_balancer_type = "application"
   internal           = false
-  subnets            = data.aws_subnets.default.ids
+  subnets            = local.subnet_ids
   security_groups    = [aws_security_group.alb.id]
 }
 

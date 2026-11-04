@@ -1,7 +1,7 @@
 # The image Part 1 deploys. You do not need to change this file.
 #
 # There's no dependency install step and no multi-stage build, because the app
-# has no dependencies -- it's Node's standard library only. That keeps the build
+# has no dependencies. It's Node's standard library only. That keeps the build
 # fast, which matters here: your IaC rebuilds this image on every apply where
 # the source changed, and it builds for linux/amd64, which may mean emulation on
 # an Apple Silicon laptop.

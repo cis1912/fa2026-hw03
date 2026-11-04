@@ -18,7 +18,7 @@ resource "aws_security_group" "service" {
   description = "Only the load balancer may reach the tasks"
   vpc_id      = data.aws_vpc.default.id
 
-  # TODO: let the tasks accept traffic on the port the app listens on -- but
+  # TODO: let the tasks accept traffic on the port the app listens on, but
   #       only from the load balancer, not from the internet at large. Your task
   #       will have a public IP (see network.tf), so "only from the load
   #       balancer" is a claim you have to actually make, not something you get
@@ -27,5 +27,9 @@ resource "aws_security_group" "service" {
   #       A rule's source doesn't have to be an address range; it can name
   #       another security group. That distinction is the whole exercise here.
   #
-  # TODO: the tasks also need outbound access, to pull their image and ship logs.
+  # TODO: the tasks also need outbound access, to pull their image and ship logs. This is not redundant: AWS gives a brand-new security group
+  #       an allow-all egress rule, but managing the group as code *removes*
+  #       it. Leave egress out and you get a group that permits nothing
+  #       outbound, a task that can't fetch its own image, and a load
+  #       balancer with no healthy targets and no obvious explanation.
 }
