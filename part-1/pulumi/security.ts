@@ -23,18 +23,16 @@ export const serviceSecurityGroup = new aws.ec2.SecurityGroup("service", {
   vpcId: vpc.id,
 
   // TODO: let the tasks accept traffic on the port the app listens on, but
-  //       only from the load balancer, not from the internet at large. Your
-  //       task will have a public IP (see network.ts), so "only from the load
-  //       balancer" is a claim you have to actually make, not something you
-  //       get for free.
+  //       only from the load balancer. Your task has a public IP (see
+  //       network.ts), so "only from the load balancer" is a claim you have to
+  //       make, not something you get for free.
   //
   //       A rule's source doesn't have to be an address range; it can name
   //       another security group. That distinction is the whole exercise.
   //
   // TODO: the tasks also need outbound access, to pull their image and ship
-  //       logs. This is not redundant: AWS gives a brand-new security group an
+  //       logs. Not redundant: AWS gives a brand-new security group an
   //       allow-all egress rule, but managing the group as code *removes* it.
-  //       Leave egress out and you get a group that permits nothing outbound:
-  //       a task that can't fetch its own image, and a load balancer with
-  //       no healthy targets and no obvious explanation.
+  //       Leave egress out and you get a task that can't fetch its own image,
+  //       and a load balancer with no healthy targets and no explanation.
 });

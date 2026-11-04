@@ -1,11 +1,9 @@
 # GIVEN: provider setup. Nothing to change here.
 #
-# Note what's missing compared to Part 1: there's no docker provider and no ECR
+# Note what's missing compared to Part 1: no docker provider and no ECR
 # authentication, because this part never builds an image. Your code ships as a
-# zip file that AWS runs on a runtime it supplies.
-#
-# The archive provider is what builds that zip, during plan/apply, from the
-# source in part-2/backend.
+# zip that AWS runs on a runtime it supplies, and the archive provider builds
+# that zip during plan/apply from the source in part-2/backend.
 
 terraform {
   required_version = ">= 1.6"

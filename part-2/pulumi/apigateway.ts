@@ -2,9 +2,9 @@
 // the front door: it accepts the HTTP request, invokes your function, and turns
 // the return value back into an HTTP response.
 //
-// Your function doesn't parse HTTP at all: it reads the request out of the event
-// object API Gateway hands it, and returns a plain object with a status code and
-// a body. Have a look at part-2/backend/index.mjs.
+// Your function doesn't parse HTTP at all -- it reads the request out of the
+// event object API Gateway hands it and returns a plain object with a status
+// code and a body. Have a look at part-2/backend/index.mjs.
 //
 // The v2 ("HTTP API") resources are the ones to use here:
 // https://www.pulumi.com/registry/packages/aws/api-docs/apigatewayv2/
@@ -40,9 +40,9 @@ export const proxyRoute = new aws.apigatewayv2.Route("proxy", {
   // TODO: send every method, on every path, to the integration above, so both
   //       /health and / end up at your function. Route keys have their own
   //       small syntax, including a wildcard for "any method" and a greedy
-  //       path variable. The route's target names an integration, and the
-  //       expected format is in the docs, and remember from Part 1 that an
-  //       id is an Output, so you can't just drop it into a template string.
+  //       path variable. The route's target names an integration in a format
+  //       the docs give -- and remember from Part 1 that an id is an Output,
+  //       so you can't just drop it into a template string.
 });
 
 export const rootRoute = new aws.apigatewayv2.Route("root", {
@@ -55,21 +55,20 @@ export const rootRoute = new aws.apigatewayv2.Route("root", {
 export const stage = new aws.apigatewayv2.Stage("default", {
   apiId: api.id,
 
-  // TODO: a stage to serve the API from. There is one special stage name that
-  //       serves it with no path prefix at all. Compare a stage named
-  //       "prod", which would put every request under /prod. You want the
-  //       former.
+  // TODO: a stage to serve the API from. One special stage name serves it with
+  //       no path prefix at all; a stage named "prod" would put every request
+  //       under /prod. You want the former.
   //
   //       Also arrange for route changes to go live by themselves, rather
   //       than needing a separate deployment every time.
 });
 
 export const permission = new aws.lambda.Permission("apigw", {
-  // TODO: API Gateway is a separate AWS service. Being *wired* to your
-  //       function is not the same as being *allowed* to invoke it -- grant
-  //       the invoke action to API Gateway's service principal, and scope the
-  //       grant so that only this API can call this function (rather than
-  //       anything at AWS that happens to ask).
+  // TODO: API Gateway is a separate AWS service, and being *wired* to your
+  //       function is not the same as being *allowed* to invoke it. Grant the
+  //       invoke action to API Gateway's service principal, and scope the
+  //       grant so only this API can call this function (rather than anything
+  //       at AWS that happens to ask).
   //
   // Leave this out and everything deploys cleanly, and then every single curl
   // returns {"message":"Internal Server Error"} with nothing whatsoever in

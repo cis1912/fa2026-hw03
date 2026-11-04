@@ -1,5 +1,5 @@
-// GIVEN: the stack's outputs. Nothing to fill in, but `baseUrl` is the one
-// you'll use constantly:
+// GIVEN: the stack's outputs. Nothing to fill in, but you'll use `baseUrl`
+// constantly:
 //
 //   curl "$(pulumi stack output baseUrl)/health"
 

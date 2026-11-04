@@ -1,5 +1,5 @@
-# GIVEN: the knobs for this deployment. Override any of them in a
-# terraform.tfvars file if you like, but the defaults all work as-is.
+# GIVEN: the knobs for this deployment. Override them in a terraform.tfvars if
+# you like; the defaults all work as-is.
 
 variable "aws_region" {
   description = "Region to deploy into."

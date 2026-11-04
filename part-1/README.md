@@ -1,28 +1,26 @@
 # Part 1: A Backend on ECS Fargate
 
-In HW1 you ran containers on your own machine — `docker run`, then Docker Compose to wire a few together. In HW2 you stopped describing *steps* and started describing *desired state*: you handed Kubernetes a description of what should exist, and a control loop kept the cluster honest to it.
+HW2 taught you to describe *desired state* rather than steps, and let a control loop keep reality honest to it. **Infrastructure as Code** applies that to the cloud itself: you write down what should exist, in version control; a tool diffs it against reality and makes reality match.
 
-Both of those stopped at the edge of your laptop. A real deployment needs things your laptop doesn't have: a public address, a load balancer, somewhere to store images, and permissions governing who may do what. In the AWS console all of that is available through a few dozen web forms — and this is genuinely how a lot of infrastructure gets built, once, by one person, on a Tuesday afternoon. Six months later nobody remembers which checkboxes were ticked, staging doesn't quite match production, and the person who set it up has graduated.
+The alternative is the AWS console's few dozen web forms — which is genuinely how a lot of infrastructure gets built, once, by one person, on a Tuesday afternoon, after which nobody remembers which checkboxes were ticked. Written down instead, the description *is* the documentation, code review applies to your network topology, and a second identical copy is one command away.
 
-**Infrastructure as Code** applies HW2's lesson to the cloud itself. You write down what should exist, in files, in version control; a tool reads your description, compares it to reality, and makes reality match. Nobody clicks anything. The description *is* the documentation, code review applies to your network topology, and standing up a second identical copy means running one command.
-
-The application is deliberately trivial — it tells you the time — so that nothing in this homework is about application code. Every interesting decision you make is infrastructure.
+The application is deliberately trivial — it tells you the time — so every interesting decision here is infrastructure.
 
 ## Step 0: Why State?
 
 > 🤔 This is something we'd like you to think about...
 
-In [RESPONSE.md](../RESPONSE.md), write your response to the following question. The [Terraform state docs](https://developer.hashicorp.com/terraform/language/state/purpose) or [Pulumi state docs](https://www.pulumi.com/docs/concepts/state/) will be useful here, depending on which tool you picked.
+Answer this in [RESPONSE.md](../RESPONSE.md). The [Terraform state docs](https://developer.hashicorp.com/terraform/language/state/purpose) or [Pulumi state docs](https://www.pulumi.com/docs/concepts/state/) will help, depending on your tool.
 
 > Terraform and Pulumi both keep a *state file*. Why is state necessary at all — why can't the tool just inspect your AWS account and diff it against your configuration? What does `terraform plan` / `pulumi preview` give you that clicking through the AWS console doesn't?
 
 ## Step 1: Getting Oriented
 
-Pick your tool — [`terraform/`](./terraform) or [`pulumi/`](./pulumi) — and work in that directory for the rest of this part. The two describe identical infrastructure; completing either one completes the assignment.
+Pick your tool — [`terraform/`](./terraform) or [`pulumi/`](./pulumi) — and stay in that directory for this part. Either one completes the assignment.
 
-The application lives in [`backend/`](./backend): one JavaScript file with no dependencies, and a `Dockerfile`. You shouldn't need to touch either. Part 2 deploys the same job in the same language, so anything that differs between the two parts is infrastructure, not code.
+The app lives in [`backend/`](./backend): one JavaScript file, no dependencies, plus a `Dockerfile`. You shouldn't need to touch either.
 
-Some of the infrastructure is already finished, and worth reading before you write anything:
+Some infrastructure is already finished, and worth reading first:
 
 | Terraform | Pulumi | |
 |---|---|---|
@@ -30,42 +28,42 @@ Some of the infrastructure is already finished, and worth reading before you wri
 | `network.tf` | `network.ts` | The VPC and subnets. We borrow the account's default VPC; building one is a homework of its own. |
 | `alb.tf` | `alb.ts` | The load balancer, target group, and listener. |
 | `iam.tf` | `iam.ts` | The task execution role. |
-| `outputs.tf` | `index.ts` | The values you get back after deploying, including `base_url` / `baseUrl`. |
+| `outputs.tf` | `index.ts` | What you get back after deploying, including `base_url` / `baseUrl`. |
 
-The load balancer and the IAM role are given to you. They're necessary, and worth reading once — Step 4 points out the two things in them that generalise — but writing them out is boilerplate rather than the lesson here.
+The load balancer and IAM role are given to you: necessary, worth reading once (Step 4 covers the two things in them that generalise), but boilerplate to write.
 
-Everything else carries `TODO`s. Each one says what's needed and hints at where to look; none expect you to guess a magic string you've never seen. Work through them in the order below, since the resources depend on each other in roughly that order.
+Everything else carries `TODO`s saying what's needed and hinting at where to look. Work through them in the order below, since the resources depend on each other in roughly that order.
 
-If you want the whole target shape at once: an ECR repository holding your image, a load balancer with a public DNS name, a target group it forwards to, an ECS service keeping one copy of your container alive and registered with that target group, two security groups controlling who can talk to whom, and an IAM role letting ECS pull your image. The load balancer and the role already exist — what you're writing is the image, the security groups, and the ECS half.
+The target shape: an ECR repository holding your image, a load balancer with a public DNS name, a target group it forwards to, an ECS service keeping one copy of your container alive and registered with that target group, two security groups, and an IAM role letting ECS pull your image. You're writing the image, the security groups, and the ECS half.
 
 ## Step 2: The Image
 
 Fill in the TODOs in `image.tf` / `image.ts`.
 
-Your container image has to live in a registry that AWS can pull from. ECS *can* pull from Docker Hub, but your own images generally belong somewhere private, inside your own account, with IAM deciding who may push and pull — and **ECR** (Elastic Container Registry) is AWS's answer to that. You'll declare a repository for it here.
+Your image needs a registry AWS can pull from. ECS *can* pull from Docker Hub, but your own images belong inside your own account with IAM deciding who may push and pull — that's **ECR** (Elastic Container Registry), and you declare a repository for it here.
 
-The notable part is that your IaC tool also performs the `docker build` and the `docker push` — look at the parts of this file that are already written. You never run those commands yourself, and you never copy an image URI around by hand: the repository you declare, the build that produces the image, and the deployment that consumes it are one dependency graph. Change the app, re-apply, and the right things rebuild in the right order.
+The notable part, already written for you, is that your IaC tool performs the `docker build` and `docker push` too. You never run those commands and never copy an image URI by hand: the repository, the build, and the deployment are one dependency graph.
 
-While you're in there, read what's already written about *change detection*, because the two tools solve it very differently.
+Read what's written about *change detection*, because the two tools solve it very differently:
 
-**Terraform**: read the two `triggers` blocks and the comments on them. They exist because neither the build nor the push has any *tracked input* that changes when you edit your source — the image's name is `...:v1` either way. Without them, Terraform would compare the config to its state, find nothing different, and cheerfully report no changes while running last week's code.
+**Terraform**: read the two `triggers` blocks and their comments. Neither the build nor the push has any *tracked input* that changes when you edit your source — the image is named `...:v1` either way. Without them, Terraform finds no difference and cheerfully reports no changes while running last week's code.
 
-**Pulumi**: `image.ts` has no equivalent, and that's worth understanding rather than just accepting. `awsx.ecr.Image` delegates to a `docker-build` image resource whose provider hashes your build context itself on every preview, so edited source shows up as a diff without you declaring anything — and it hands back `imageUri` already pinned to the pushed digest rather than the tag.
+**Pulumi**: `image.ts` has no equivalent. `awsx.ecr.Image` delegates to a `docker-build` resource whose provider hashes your build context on every preview, so edited source shows up as a diff without you declaring anything — and `imageUri` comes back pinned to the pushed digest rather than the tag.
 
-Either way the lesson is the same: "nothing to do" and "nothing changed" are not the same claim, and this is the kind of gap where they come apart.
+Either way: "nothing to do" and "nothing changed" are not the same claim, and this is where they come apart.
 
 ## Step 3: Security Groups
 
 Fill in the TODOs in `security.tf` / `security.ts`.
 
-A security group is a stateful firewall attached to a network interface. You need two, and the interesting part is the second: the tasks should accept traffic **only from the load balancer**, which you express by referencing the load balancer's security group rather than an IP range. Two rules, one sentence each — and that's the difference between "the internet can reach my app through the front door" and "the internet can reach my app, and also reach around the side."
+A security group is a stateful firewall on a network interface. You need two, and the second is the interesting one: tasks should accept traffic **only from the load balancer**, which you express by referencing the ALB's security group rather than an IP range. That's the difference between "the internet can reach my app through the front door" and "...and also reach around the side."
 
 ## Step 4: Read the Load Balancer and the Role
 
-Nothing to write here — `alb.tf` / `alb.ts` and `iam.tf` / `iam.ts` are already done. Two things in them generalise well beyond this assignment, so give them a read before continuing:
+Nothing to write — `alb.tf` / `alb.ts` and `iam.tf` / `iam.ts` are done. Two things in them generalise well beyond this assignment:
 
-- **The load balancer exists because your task's address doesn't last.** Fargate hands each task a fresh private IP, so something stable has to sit in front of it. The target group is the list of places to forward to, and its health check — pointed at the backend's `/health` — decides which tasks are currently fit to serve. Note `target_type = "ip"`: tasks in `awsvpc` mode register by IP rather than as EC2 instances, and a target group with the wrong target type is a classic cause of a service that never turns healthy.
-- **The execution role belongs to the platform, not your app.** Before your container starts, the ECS agent has to pull the image and create a log stream on your behalf, and AWS requires explicit permission for that. Notice that the role answers two separate questions — *who may assume this role* (the trust policy) and *what may they then do* (the attached policy). AWS always asks both, and conflating them is a common source of confusion.
+- **The load balancer exists because your task's address doesn't last.** Fargate gives each task a fresh private IP, so something stable has to sit in front. The target group is the list of places to forward to, and its health check — pointed at `/health` — decides which tasks are fit to serve. Note `target_type = "ip"`: tasks in `awsvpc` mode register by IP, not as EC2 instances, and the wrong target type is a classic cause of a service that never turns healthy.
+- **The execution role belongs to the platform, not your app.** Before your container starts, the ECS agent pulls the image and creates a log stream on your behalf, and AWS requires explicit permission. Notice the role answers two separate questions — *who may assume it* (trust policy) and *what may they then do* (attached policy). AWS always asks both; conflating them is a common source of confusion.
 
 ## Step 5: The Cluster, the Task, and the Service
 
@@ -73,14 +71,14 @@ Fill in the TODOs in `ecs.tf` / `ecs.ts`. This is the heart of it, and it maps a
 
 | ECS | ≈ Kubernetes |
 |---|---|
-| Task definition | Pod spec — the image, port, env vars, resource limits |
+| Task definition | Pod spec — image, port, env vars, resource limits |
 | Task | Pod — one running copy |
 | Service | Deployment — keeps N copies alive, replaces dead ones |
 | Cluster | the cluster, except with Fargate there are no servers in it |
 
-The task definition is where you'll spend the most time: it's a container spec in JSON, and it needs the image, the port, `PLATFORM=ecs` in the environment (the app reads that and reports it straight back to you, which is how `curl` will tell you which half of this homework answered), and a log configuration pointing at the log group that's already declared for you.
+The task definition takes the most time: a container spec in JSON needing the image, the port, `PLATFORM=ecs` in the environment (the app reports it straight back, so `curl` tells you which half of this homework answered), and a log configuration pointing at the log group already declared for you.
 
-Read the comment about pinning the image **by digest** rather than by tag. It explains a class of bug that will otherwise cost you an afternoon somewhere down the line.
+Read the comment about pinning the image **by digest** rather than by tag — it explains a class of bug that will otherwise cost you an afternoon.
 
 ## Step 6: Deploy
 
@@ -104,13 +102,13 @@ pulumi preview                # read this before you up it
 pulumi up
 ```
 
-The first run takes a few minutes — most of it building and pushing the image. Then the ECS service has to start a task and the load balancer has to health-check it before it'll send traffic. A `503` for the first minute or two is normal; a `503` for five minutes is a problem, and the [Tips](#tips) below are where to start.
+The first run takes a few minutes, mostly building and pushing the image; then the service has to start a task and the ALB has to health-check it. A `503` for a minute or two is normal, five minutes is a problem — start with the [Tips](#tips).
 
-Do read the plan/preview output before confirming it. Learning to skim a plan for "wait, why is it replacing *that*?" is most of the skill this assignment is teaching.
+Do read the plan/preview before confirming. Learning to skim a plan for "wait, why is it replacing *that*?" is most of the skill this assignment teaches.
 
 ## Step 7: Test It
 
-Every one of these is just `curl` against the URL your deployment printed:
+All just `curl` against the URL your deployment printed:
 
 ```bash
 # Terraform
@@ -122,25 +120,23 @@ curl "$BASE_URL/health"
 curl "$BASE_URL/"
 ```
 
-The second one returns the current time, along with a `platform` field that should say `ecs` — that's the environment variable you set in the task definition coming back to you, confirming you're talking to the thing you think you're talking to. Call it twice and the timestamp should advance.
-
-Or run all of it at once:
+The second returns the current time plus a `platform` field reading `ecs` — your task definition's environment variable coming back, confirming you're talking to what you think you are. Call it twice and the timestamp should advance. Or all at once:
 
 ```bash
 ../../scripts/smoke-test.sh "$BASE_URL"
 ```
 
-That script is pure `curl`; it prints every command it runs, so you can pull any single step out of it to debug by hand. All three checks should pass before you move on to Part 2.
+That script is pure `curl` and prints every command it runs, so you can pull any step out to debug by hand. All three checks should pass before Part 2.
 
 ## Step 8: Change Something
 
-Worth doing once, because it's the actual payoff. Edit `backend/server.mjs` — add a field to the JSON response, say — and re-apply:
+Worth doing once; it's the payoff. Edit `backend/server.mjs` — add a field to the JSON response — and re-apply:
 
 ```bash
 terraform apply     # or: pulumi up
 ```
 
-Watch what happens: your tool notices the source changed, rebuilds the image, pushes it, sees that the new digest differs from the deployed one, writes a new task definition revision, and rolls the service over to it. The load balancer keeps serving the old task until the new one is healthy. You described none of that sequencing — you changed a source file and said "make it so."
+Your tool rebuilds, pushes, sees the new digest differs from the deployed one, writes a new task definition revision, and rolls the service over — with the ALB serving the old task until the new one is healthy. You described none of that sequencing; you changed a file and said "make it so."
 
 ```bash
 curl "$BASE_URL/"
@@ -148,7 +144,7 @@ curl "$BASE_URL/"
 
 ## Cleanup
 
-**Do this now, not later** — the load balancer bills by the hour whether you're using it or not.
+**Do this now, not later** — the load balancer bills by the hour whether you use it or not.
 
 ```bash
 terraform destroy     # or: pulumi destroy
@@ -161,21 +157,21 @@ aws elbv2 describe-load-balancers --query 'LoadBalancers[].LoadBalancerName'
 aws ecs list-clusters
 ```
 
-If `destroy` complains that the ECR repository isn't empty, you skipped one of the TODOs in `image.tf` / `image.ts` — go read it again.
+If `destroy` complains the ECR repository isn't empty, you skipped one of the TODOs in `image.tf` / `image.ts`.
 
 ## Tips
 
-- **`503` from the load balancer** means it has no healthy targets. Look at the target group's health in the console, or:
+- **`503` from the load balancer** means no healthy targets. Check the target group's health in the console, or:
   ```bash
   aws ecs describe-services --cluster <cluster> --services <service> \
     --query 'services[0].events[:5]'
   ```
-  The service's recent events usually say exactly what's wrong, in English.
+  The service's recent events usually say what's wrong, in English.
 - **The task starts and immediately dies.** Read the container's logs — that's what the log group is for:
   ```bash
   aws logs tail /ecs/cis1912-hw3-part1 --follow
   ```
-- **The task never starts at all** (stuck in `PENDING`, or stopped with a pull error) is usually one of two things: the execution role can't pull from ECR, or the task has no route to ECR because it didn't get a public IP.
-- **`terraform plan` wants to rebuild the image every time** (Terraform track). Check the `triggers` hash in `image.tf` — if it's seeing a file that changes on its own, that'd do it.
-- **Reading a plan**: `~` means update in place, `-/+` means destroy and recreate. The second is worth pausing over, always.
+- **The task never starts at all** (stuck `PENDING`, or a pull error) is usually one of two things: the execution role can't pull from ECR, or the task has no route to ECR because it didn't get a public IP.
+- **`terraform plan` wants to rebuild the image every time** (Terraform track): check the `triggers` hash in `image.tf` — a file that changes on its own would do it.
+- **Reading a plan**: `~` means update in place, `-/+` means destroy and recreate. The second is always worth pausing over.
 - **No default VPC?** Some newer accounts ship without one. `aws ec2 create-default-vpc` fixes that.

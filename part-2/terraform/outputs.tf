@@ -1,8 +1,8 @@
 output "base_url" {
   description = "Where your backend is reachable. Feed this to curl."
 
-  # GIVEN: api_endpoint already points at the $default stage, so there's no
-  # path prefix to tack on, unlike a named stage, which you'd have to append.
+  # GIVEN: api_endpoint already points at the $default stage, so there's no path
+  # prefix to tack on -- unlike a named stage, which you'd have to append.
   value = aws_apigatewayv2_api.this.api_endpoint
 }
 

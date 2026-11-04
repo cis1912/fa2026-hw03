@@ -1,16 +1,13 @@
 /**
  * A backend that tells you the time. That's it.
  *
- * Nothing in this directory is homework, you never need to edit it. The app is
- * deliberately this small so that nothing about HW3 is about application code:
- * every interesting decision you make is in the infrastructure.
+ * Nothing in this directory is homework; you never need to edit it. It's this
+ * small so that nothing about HW3 is about application code -- every
+ * interesting decision is in the infrastructure. No dependencies either, just
+ * Node's built-in http module, which keeps the Docker build fast.
  *
- * No dependencies either, just Node's built-in http module, which keeps the
- * Docker build fast.
- *
- * Part 2 deploys the same job, in the same language, as a Lambda function --
- * and that file looks quite different from this one. Worth comparing them once
- * you get there.
+ * Part 2 deploys the same job in the same language as a Lambda function, and
+ * that file looks quite different. Worth comparing once you get there.
  */
 
 import { createServer } from "node:http";

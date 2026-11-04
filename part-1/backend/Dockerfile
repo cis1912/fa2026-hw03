@@ -1,21 +1,19 @@
 # The image Part 1 deploys. You do not need to change this file.
 #
-# There's no dependency install step and no multi-stage build, because the app
-# has no dependencies. It's Node's standard library only. That keeps the build
-# fast, which matters here: your IaC rebuilds this image on every apply where
-# the source changed, and it builds for linux/amd64, which may mean emulation on
-# an Apple Silicon laptop.
+# No dependency install and no multi-stage build, because the app has no
+# dependencies -- Node's standard library only. That keeps the build fast, which
+# matters: your IaC rebuilds this on every apply where the source changed, for
+# linux/amd64, which may mean emulation on an Apple Silicon laptop.
 #
-# Node 22 to match the Lambda runtime Part 2 uses, so the only thing differing
-# between the two parts is how the code gets deployed.
+# Node 22 matches the Lambda runtime Part 2 uses, so the only thing differing
+# between the parts is how the code gets deployed.
 
 FROM public.ecr.aws/docker/library/node:22-slim
 
 WORKDIR /app
 COPY server.mjs .
 
-# Don't run as root. The official Node images ship an unprivileged `node` user
-# for exactly this.
+# Don't run as root; the official Node images ship a `node` user for this.
 USER node
 
 ENV PORT=8000 \

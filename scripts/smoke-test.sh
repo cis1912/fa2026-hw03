@@ -5,9 +5,9 @@
 #   ./scripts/smoke-test.sh http://my-alb-1234.us-east-1.elb.amazonaws.com
 #   ./scripts/smoke-test.sh https://abc123.execute-api.us-east-1.amazonaws.com
 #
-# Works against either part. Both deployments answer the same two endpoints.
-# Every check prints the exact curl command it runs, so you can copy any single
-# step out of here and poke at it by hand. You do not need to edit this file.
+# Works against either part -- both answer the same two endpoints. Every check
+# prints the exact curl command it runs, so you can copy any single step out and
+# poke at it by hand. You do not need to edit this file.
 
 set -u
 
@@ -29,7 +29,7 @@ fail() {
 
 # Runs curl, setting $body and $code. Prints the command first.
 request() {
-  # Echo a copy-pasteable version of the command, with arguments quoted.
+  # Copy-pasteable, with arguments quoted.
   printf '  $ curl -sS'
   for arg in "$@"; do printf ' %q' "$arg"; done
   printf '\n'
@@ -44,7 +44,7 @@ request() {
   printf '  -> %s %s\n' "$code" "$body"
 }
 
-# Pulls a string field out of a JSON body without needing jq installed.
+# Pulls a string field out of a JSON body, without needing jq.
 json_field() {
   printf '%s' "$2" | sed -n "s/.*\"$1\": *\"\([^\"]*\)\".*/\1/p" | head -1
 }
@@ -75,8 +75,8 @@ echo "[3/3] GET / again should return a *different* time"
 request "$BASE_URL/"
 second_time="$(json_field time "$body")"
 if [ "$code" = "200" ] && [ -n "$second_time" ] && [ "$second_time" != "$first_time" ]; then
-  # Proves the clock is being read per request, rather than a value baked in at
-  # build time or served from a cache somewhere between you and the app.
+  # Proves the clock is read per request, not baked in at build time or served
+  # from a cache between you and the app.
   pass "time advanced to $second_time"
 elif [ "$code" = "200" ] && [ -n "$second_time" ]; then
   fail "got the same timestamp twice ($second_time) -- is something caching?"

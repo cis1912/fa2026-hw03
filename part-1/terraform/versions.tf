@@ -1,14 +1,12 @@
-# GIVEN: provider setup. You don't need to change anything in this file, but do
-# read it. It explains where your image comes from.
+# GIVEN: provider setup. Nothing to change, but read it -- it explains where
+# your image comes from.
 #
-# Two providers are in play:
 #   - aws    -- everything in your account (ECR, ECS, the ALB, IAM, logs)
-#   - docker -- builds the image in ../../backend and pushes it to ECR, so you
+#   - docker -- builds the image in ../backend and pushes it to ECR, so you
 #               never run `docker build` or `docker push` by hand
 #
-# The docker provider needs credentials for your ECR registry. The
-# aws_ecr_authorization_token data source mints a short-lived username and
-# password for exactly that, and we hand it straight to the provider below.
+# The docker provider needs ECR credentials; aws_ecr_authorization_token mints
+# short-lived ones and we hand them straight to it below.
 
 terraform {
   required_version = ">= 1.6"

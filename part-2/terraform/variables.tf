@@ -22,13 +22,13 @@ variable "lambda_runtime" {
   type        = string
 
   # Runtimes get deprecated on a published schedule, so this is a value you'd
-  # genuinely have to bump every year or two in a real project:
+  # genuinely have to bump every year or two:
   # https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html
   #
-  # Note that you can't just name any runtime AWS currently supports: the AWS
-  # provider version pinned in versions.tf validates this string against a list
-  # baked into that release, so adopting a brand-new runtime also means
-  # upgrading the provider. Your dependencies constrain your infrastructure.
+  # And you can't name just any runtime AWS supports: the provider version
+  # pinned in versions.tf validates this against a list baked into that release,
+  # so adopting a brand-new runtime also means a provider upgrade. Your
+  # dependencies constrain your infrastructure.
   default = "nodejs22.x"
 }
 
