@@ -1,4 +1,4 @@
-# Part 2: The Same Job, Without a Server
+# Part 2 (Optional): The Same Job, Without a Server
 
 Stop and notice what Part 1 actually built. There is a container running right now — or there was, until you destroyed it — and it runs whether or not anybody is making requests. At 3am, with zero traffic, you are paying for a load balancer and a task sitting there waiting. That's the right shape for plenty of applications. It is a strange shape for an app whose entire job is to read a clock.
 
@@ -6,16 +6,16 @@ Stop and notice what Part 1 actually built. There is a container running right n
 
 So this part deploys a backend that does the same trivial thing — it tells you the time — and almost everything else about how it gets there is different:
 
-| | Part 1 | Part 2 |
-|---|---|---|
-| The artifact | a container image you build | a zip of one source file |
-| Where it lives | a registry (ECR) you provision | uploaded straight to Lambda |
-| The runtime | yours — you chose the base image, you start the server | AWS's — you pick `nodejs22.x` and hand over a function |
-| The language | Node 22 | Node 22 — deliberately the same |
-| What's running at idle | a container, and a load balancer | nothing |
-| Your code's shape | an HTTP server with routes | one function, called per request |
+|                        | Part 1                                                 | Part 2                                                 |
+| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------ |
+| The artifact           | a container image you build                            | a zip of one source file                               |
+| Where it lives         | a registry (ECR) you provision                         | uploaded straight to Lambda                            |
+| The runtime            | yours — you chose the base image, you start the server | AWS's — you pick `nodejs22.x` and hand over a function |
+| The language           | Node 22                                                | Node 22 — deliberately the same                        |
+| What's running at idle | a container, and a load balancer                       | nothing                                                |
+| Your code's shape      | an HTTP server with routes                             | one function, called per request                       |
 
-Note the last two rows together. Both parts are Node 22, both just read a clock — and [`backend/index.mjs`](./backend/index.mjs) still isn't the same file as Part 1's `server.mjs`. Part 1's creates an HTTP server and listens on a port; this one exports a single function and never thinks about HTTP at all. Lambda doesn't want a server; it wants something it can call. The platform shapes the code, which is worth noticing on its own — "just deploy it differently" is rarely *just*.
+Note the last two rows together. Both parts are Node 22, both just read a clock — and [`backend/index.mjs`](./backend/index.mjs) still isn't the same file as Part 1's `server.mjs`. Part 1's creates an HTTP server and listens on a port; this one exports a single function and never thinks about HTTP at all. Lambda doesn't want a server; it wants something it can call. The platform shapes the code, which is worth noticing on its own — "just deploy it differently" is rarely _just_.
 
 Holding the language constant is the point, though: everything else you observe between the two parts is attributable to the deployment model, not to a change of stack.
 
@@ -37,19 +37,19 @@ Use the same tool you used in Part 1 — [`terraform/`](./terraform) or [`pulumi
 
 Already written for you:
 
-| Terraform | Pulumi | |
-|---|---|---|
-| `versions.tf`, `variables.tf` | `Pulumi.yaml`, `config.ts` | Provider and configuration setup. Read what's *missing* versus Part 1. |
-| `package.tf` | — | The deployment package — the zip. On the Pulumi track you build the archive inline, in `lambda.ts`. |
-| `iam.tf` | `iam.ts` | The function's execution role — given, as Part 1's was. |
-| `outputs.tf` | `index.ts` | Your outputs, including `base_url` / `baseUrl`. |
+| Terraform                     | Pulumi                     |                                                                                                     |
+| ----------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------- |
+| `versions.tf`, `variables.tf` | `Pulumi.yaml`, `config.ts` | Provider and configuration setup. Read what's _missing_ versus Part 1.                              |
+| `package.tf`                  | —                          | The deployment package — the zip. On the Pulumi track you build the archive inline, in `lambda.ts`. |
+| `iam.tf`                      | `iam.ts`                   | The function's execution role — given, as Part 1's was.                                             |
+| `outputs.tf`                  | `index.ts`                 | Your outputs, including `base_url` / `baseUrl`.                                                     |
 
 Yours to write, in this order:
 
-| Terraform | Pulumi | |
-|---|---|---|
-| `lambda.tf` | `lambda.ts` | The function itself — Step 2. |
-| `apigateway.tf` | `apigateway.ts` | The front door — Step 3. |
+| Terraform       | Pulumi          |                               |
+| --------------- | --------------- | ----------------------------- |
+| `lambda.tf`     | `lambda.ts`     | The function itself — Step 2. |
+| `apigateway.tf` | `apigateway.ts` | The front door — Step 3.      |
 
 ## Step 2: The Function
 
@@ -71,11 +71,11 @@ Fill in the TODOs in `apigateway.tf` / `apigateway.ts`.
 
 A Lambda function has no URL, no port, and no network presence. **API Gateway** is what gives it one: it accepts the HTTP request, invokes your function, and turns the return value back into an HTTP response. In Part 1 the load balancer played this role, and the pieces line up more than you'd expect:
 
-| Part 1 | Part 2 |
-|---|---|
-| Load balancer | HTTP API |
-| Listener | Route |
-| Target group | Integration |
+| Part 1                                  | Part 2                  |
+| --------------------------------------- | ----------------------- |
+| Load balancer                           | HTTP API                |
+| Listener                                | Route                   |
+| Target group                            | Integration             |
 | Security group rule allowing the ALB in | `aws_lambda_permission` |
 
 That last row is the one to watch. Wiring API Gateway to your function does not grant it permission to invoke your function — those are two separate statements, and AWS requires both. Omit the permission and everything deploys without complaint, and then every request returns `{"message":"Internal Server Error"}` with **nothing in your function's logs**, because the function genuinely never ran. Learn that symptom now; it's a classic.
@@ -103,7 +103,7 @@ curl "$BASE_URL/"
 ../../scripts/smoke-test.sh "$BASE_URL"
 ```
 
-The *same* smoke test script as Part 1, unchanged, against a completely different deployment. The `platform` field now reads `lambda` instead of `ecs`, while `runtime` reports a Node version in both parts — which is exactly the point: the language didn't change, the deployment model did.
+The _same_ smoke test script as Part 1, unchanged, against a completely different deployment. The `platform` field now reads `lambda` instead of `ecs`, while `runtime` reports a Node version in both parts — which is exactly the point: the language didn't change, the deployment model did.
 
 Now two experiments, because they're the evidence for Step 0.
 

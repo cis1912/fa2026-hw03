@@ -21,7 +21,7 @@ This is the first homework that touches a real cloud account and spends real mon
   If that prints an account number, you're set. If it doesn't, fix this before going any further — every error you'd hit downstream is a confusing one.
 
 - **Docker**, running — for Part 1, which builds a container image on your machine before pushing it to AWS. Part 2 needs no Docker at all.
-- **Terraform** (≥ 1.6) *or* **Pulumi** (≥ 3.100) + **Node.js** (≥ 20). You only need one of them — see below.
+- **Terraform** (≥ 1.6) _or_ **Pulumi** (≥ 3.100) + **Node.js** (≥ 20). You only need one of them — see below.
 
 ## Pick one: Terraform or Pulumi
 
@@ -30,36 +30,11 @@ Each part ships two starter directories, `terraform/` and `pulumi/`, that descri
 - `terraform/` uses HCL, a language that exists only for this purpose.
 - `pulumi/` uses TypeScript, with loops, functions, and types you already know.
 
-They're the two dominant tools in this space and the industry is genuinely split, so the useful lesson is the one both share: your infrastructure is a program, kept in version control, applied by a machine. Whichever you pick, use the *same* tool for both parts so Part 2 can lean on what you built in Part 1.
+They're the two dominant tools in this space and the industry is genuinely split, so the useful lesson is the one both share: your infrastructure is a program, kept in version control, applied by a machine. Whichever you pick, use the _same_ tool for both parts so Part 2 can lean on what you built in Part 1.
 
-## 💸 This costs money — tear it down
+## Part 2 is optional
 
-Part 1 runs a load balancer, which bills by the hour whether or not anyone is using it:
-
-| | roughly |
-|---|---|
-| Application Load Balancer | $0.0225/hour — about **$16/month** if you leave it up |
-| Its two public IPv4 addresses, one per availability zone | $0.01/hour — about **$7/month** |
-| Fargate task (0.25 vCPU, 0.5 GB) plus its public IP | $0.017/hour — about **$12/month** |
-| ECR storage, CloudWatch logs | pennies |
-| Part 2 (Lambda + API Gateway) | fractions of a cent at this scale |
-
-Left up for a full month that's roughly **$35**, not pennies. Note how much of it
-is the load balancer and its addresses rather than the thing actually running
-your code — AWS bills every public IPv4 address by the hour, which is why
-`network.tf` deliberately uses two availability zones instead of all six.
-
-So: **run `terraform destroy` / `pulumi destroy` as soon as you've verified your work.** Everything here can be rebuilt from your config in a few minutes — that's rather the point of the assignment. If you want to come back and poke at it later, just apply again.
-
-An orphaned load balancer is the most common way students accidentally spend money on this assignment. To confirm you have none left over:
-
-```bash
-aws elbv2 describe-load-balancers --query 'LoadBalancers[].LoadBalancerName'
-aws ecs list-services --cluster cis1912-hw3-part1
-```
-
-Both should come back empty. A forgotten Fargate task with no load balancer in
-front of it is still about $12/month, and it's easy to miss.
+Part 2 of this assignment is optional, but we highly recommend going through it to learn about serverless deployments using lambda!
 
 ## What you do and don't edit
 
@@ -68,7 +43,7 @@ Both backends are **already written**, and neither one is interesting on purpose
 - [`part-1/backend/`](./part-1/backend) — a dependency-free Node HTTP server, plus a finished `Dockerfile`.
 - [`part-2/backend/`](./part-2/backend) — one JavaScript file exporting one function, for Lambda's Node.js runtime.
 
-Both are Node, on the same major version, and they're *still* separate implementations — because the two platforms want different shapes of program: Part 1's creates a server and listens on a port, Part 2's exports one function for AWS to call. That the language is held constant is deliberate; it means every difference you observe between the two parts comes from the deployment model. Part 2's README opens with that comparison.
+Both are Node, on the same major version, and they're _still_ separate implementations — because the two platforms want different shapes of program: Part 1's creates a server and listens on a port, Part 2's exports one function for AWS to call. That the language is held constant is deliberate; it means every difference you observe between the two parts comes from the deployment model. Part 2's README opens with that comparison.
 
 [`scripts/smoke-test.sh`](./scripts/smoke-test.sh) tests either deployment with nothing but `curl`, and you shouldn't need to change it either.
 
