@@ -54,11 +54,8 @@ resource "aws_ecs_service" "backend" {
   #       balancer learns where to send traffic. You'll have to name which
   #       container and port it should be delivered to.
   #
-  # TODO: two orderings nothing above expresses, both of which Terraform will
-  #       otherwise get wrong on a first apply:
-  #         - the service can't register targets before the listener exists
-  #         - the first task can't pull its image before the execution role's
-  #           *policy attachment* lands. Referencing the role in the task
-  #           definition creates no dependency on the attachment.
+  # TODO: one ordering nothing above expresses, which Terraform will otherwise
+  #       get wrong on a first apply: the service can't register targets
+  #       before the listener exists, and nothing here references the listener.
   #       Terraform has a meta-argument for dependencies it can't infer.
 }

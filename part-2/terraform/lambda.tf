@@ -15,7 +15,7 @@ resource "aws_cloudwatch_log_group" "lambda" {
 
 resource "aws_lambda_function" "backend" {
   function_name = var.project_name
-  role          = aws_iam_role.lambda.arn
+  role          = data.aws_iam_role.lambda.arn
 
   # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function
   #

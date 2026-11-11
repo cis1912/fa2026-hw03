@@ -23,6 +23,10 @@ This is the first homework that touches a real cloud account and spends real mon
 - **Docker**, running — Part 1 builds a container image locally before pushing it to AWS. Part 2 needs no Docker.
 - **Terraform** (≥ 1.6) _or_ **Pulumi** (≥ 3.100) + **Node.js** (≥ 20). You only need one.
 
+## IAM roles are provided
+
+Your AWS account can't create, change, or delete IAM roles. The two roles this homework runs under — `cis1912-hw3-ecs-task-execution` (Part 1) and `cis1912-hw3-lambda-execution` (Part 2) — already exist, and the given `iam.tf` / `iam.ts` only look them up. If you ever see an error about `iam:CreateRole`, `iam:AttachRolePolicy`, or `iam:DeleteRole`, you're running an older copy of those files.
+
 ## Pick one: Terraform or Pulumi
 
 Each part ships a `terraform/` and a `pulumi/` directory describing identical infrastructure. **Complete one of them** — your choice:

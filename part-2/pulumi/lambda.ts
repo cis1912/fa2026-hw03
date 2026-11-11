@@ -7,7 +7,7 @@ import {
   lambdaMemory,
   lambdaTimeout,
 } from "./config";
-import { lambdaRole, lambdaPolicyAttachment } from "./iam";
+import { lambdaRole } from "./iam";
 
 // GIVEN: where the function's source lives. In Part 1, shipping your code meant
 // building a container image and pushing it to a registry. Here the entire
@@ -54,8 +54,8 @@ export const func = new aws.lambda.Function(
     //       response identifies which of your two deployments answered.
   },
   {
-    // TODO: the log group and the role's policy attachment should both exist
-    //       before the function does. Resource options have a field for
-    //       declaring dependencies Pulumi can't infer.
+    // TODO: the log group should exist before the function does. Resource
+    //       options have a field for declaring dependencies Pulumi can't
+    //       infer.
   },
 );

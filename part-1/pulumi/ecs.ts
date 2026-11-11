@@ -5,7 +5,7 @@ import { subnetIds } from "./network";
 import { serviceSecurityGroup } from "./security";
 import { taskExecutionRole } from "./iam";
 import { targetGroup, listener } from "./alb";
-import { image } from "./image";
+import { imageUri } from "./image";
 
 // GIVEN: somewhere for your container's logs to land. Without this, debugging a
 // task that won't start is nearly impossible.
@@ -34,7 +34,7 @@ export const taskDefinition = new aws.ecs.TaskDefinition("backend", {
   //       and the field names inside it are AWS's, not Pulumi's:
   //       https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html
   //
-  //       The fields need to cover: which image to run (`image.imageUri` from
+  //       The fields need to cover: which image to run (`imageUri` from
   //       image.ts, already digest-pinned), which port the app listens on, the
   //       PLATFORM environment variable the app reports back, and where logs
   //       go (the driver that ships to CloudWatch, pointed at the group above,
@@ -66,11 +66,9 @@ export const service = new aws.ecs.Service(
     //       which container and port it should be delivered to.
   },
   {
-    // TODO: two orderings Pulumi can't infer from the references above:
-    //         - the service can't register targets before the listener exists
-    //         - the first task can't pull its image before the execution
-    //           role's *policy attachment* lands (referencing the role is not
-    //           the same as depending on the attachment; iam.ts exports both)
-    //       Resource options have a field for declaring dependencies.
+    // TODO: one ordering Pulumi can't infer from the references above: the
+    //       service can't register targets before the listener exists, and
+    //       nothing here references the listener. Resource options have a
+    //       field for declaring dependencies.
   },
 );

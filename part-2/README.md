@@ -39,7 +39,7 @@ Already written for you:
 | ----------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------- |
 | `versions.tf`, `variables.tf` | `Pulumi.yaml`, `config.ts` | Provider and configuration setup. Read what's _missing_ versus Part 1.                              |
 | `package.tf`                  | —                          | The deployment package — the zip. On the Pulumi track you build the archive inline, in `lambda.ts`. |
-| `iam.tf`                      | `iam.ts`                   | The function's execution role — given, as Part 1's was.                                             |
+| `iam.tf`                      | `iam.ts`                   | The function's execution role — created for you and looked up, as Part 1's was.                     |
 | `outputs.tf`                  | `index.ts`                 | Your outputs, including `base_url` / `baseUrl`.                                                     |
 
 Yours to write, in this order:
@@ -53,7 +53,7 @@ Yours to write, in this order:
 
 Fill in the TODOs in `lambda.tf` / `lambda.ts`.
 
-The execution role is given, as Part 1's was — the identical pattern with `lambda.amazonaws.com` as the principal, plus the managed policy letting the function write its own logs. Worth a glance, but nothing new.
+The execution role already exists and is only looked up, as Part 1's was — the identical pattern with `lambda.amazonaws.com` as the principal, plus the managed policy letting the function write its own logs. Worth a glance, but nothing new.
 
 The function is yours, and three of its arguments are the interesting ones:
 

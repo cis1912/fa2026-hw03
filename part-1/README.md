@@ -27,14 +27,14 @@ Some infrastructure is already finished, and worth reading first:
 | `versions.tf`, `variables.tf` | `Pulumi.yaml`, `config.ts` | Provider and configuration setup. Terraform's `versions.tf` explains where your image comes from — read it. |
 | `network.tf` | `network.ts` | The VPC and subnets. We borrow the account's default VPC; building one is a homework of its own. |
 | `alb.tf` | `alb.ts` | The load balancer, target group, and listener. |
-| `iam.tf` | `iam.ts` | The task execution role. |
+| `iam.tf` | `iam.ts` | The task execution role — created for you ahead of time, only looked up here. |
 | `outputs.tf` | `index.ts` | What you get back after deploying, including `base_url` / `baseUrl`. |
 
 The load balancer and IAM role are given to you: necessary, worth reading once (Step 4 covers the two things in them that generalise), but boilerplate to write.
 
 Everything else carries `TODO`s saying what's needed and hinting at where to look. Work through them in the order below, since the resources depend on each other in roughly that order.
 
-The target shape: an ECR repository holding your image, a load balancer with a public DNS name, a target group it forwards to, an ECS service keeping one copy of your container alive and registered with that target group, two security groups, and an IAM role letting ECS pull your image. You're writing the image, the security groups, and the ECS half.
+The target shape: an ECR repository holding your image, a load balancer with a public DNS name, a target group it forwards to, an ECS service keeping one copy of your container alive and registered with that target group, two security groups, and an IAM role letting ECS pull your image (already created for you). You're writing the image, the security groups, and the ECS half.
 
 ## Step 2: The Image
 
@@ -48,7 +48,7 @@ Read what's written about *change detection*, because the two tools solve it ver
 
 **Terraform**: read the two `triggers` blocks and their comments. Neither the build nor the push has any *tracked input* that changes when you edit your source — the image is named `...:v1` either way. Without them, Terraform finds no difference and cheerfully reports no changes while running last week's code.
 
-**Pulumi**: `image.ts` has no equivalent. `awsx.ecr.Image` delegates to a `docker-build` resource whose provider hashes your build context on every preview, so edited source shows up as a diff without you declaring anything — and `imageUri` comes back pinned to the pushed digest rather than the tag.
+**Pulumi**: `image.ts` has no equivalent. The `docker-build` `Image` resource hashes your build context on every preview, so edited source shows up as a diff without you declaring anything — and `imageUri` is built from the pushed image's digest rather than its tag.
 
 Either way: "nothing to do" and "nothing changed" are not the same claim, and this is where they come apart.
 
@@ -63,7 +63,7 @@ A security group is a stateful firewall on a network interface. You need two, an
 Nothing to write — `alb.tf` / `alb.ts` and `iam.tf` / `iam.ts` are done. Two things in them generalise well beyond this assignment:
 
 - **The load balancer exists because your task's address doesn't last.** Fargate gives each task a fresh private IP, so something stable has to sit in front. The target group is the list of places to forward to, and its health check — pointed at `/health` — decides which tasks are fit to serve. Note `target_type = "ip"`: tasks in `awsvpc` mode register by IP, not as EC2 instances, and the wrong target type is a classic cause of a service that never turns healthy.
-- **The execution role belongs to the platform, not your app.** Before your container starts, the ECS agent pulls the image and creates a log stream on your behalf, and AWS requires explicit permission. Notice the role answers two separate questions — *who may assume it* (trust policy) and *what may they then do* (attached policy). AWS always asks both; conflating them is a common source of confusion.
+- **The execution role belongs to the platform, not your app.** Before your container starts, the ECS agent pulls the image and creates a log stream on your behalf, and AWS requires explicit permission. Your account can't create IAM roles, so this one already exists and `iam.tf` / `iam.ts` just look it up by name — but the comment there shows how it was made. Notice the role answers two separate questions — *who may assume it* (trust policy) and *what may they then do* (attached policy). AWS always asks both; conflating them is a common source of confusion.
 
 ## Step 5: The Cluster, the Task, and the Service
 
@@ -171,7 +171,7 @@ If `destroy` complains the ECR repository isn't empty, you skipped one of the TO
   ```bash
   aws logs tail /ecs/cis1912-hw3-part1 --follow
   ```
-- **The task never starts at all** (stuck `PENDING`, or a pull error) is usually one of two things: the execution role can't pull from ECR, or the task has no route to ECR because it didn't get a public IP.
+- **The task never starts at all** (stuck `PENDING`, or a pull error) is usually one of two things: the task definition doesn't name the execution role (so nothing is allowed to pull from ECR), or the task has no route to ECR because it didn't get a public IP.
 - **`terraform plan` wants to rebuild the image every time** (Terraform track): check the `triggers` hash in `image.tf` — a file that changes on its own would do it.
 - **Reading a plan**: `~` means update in place, `-/+` means destroy and recreate. The second is always worth pausing over.
 - **No default VPC?** Some newer accounts ship without one. `aws ec2 create-default-vpc` fixes that.
